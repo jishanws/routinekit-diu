@@ -1,0 +1,409 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Surface Canvas (Page Backdrop & Levels - "Clean Modern Light") */
+  --surface-page: #FFFFFF;             /* Pure clean white backdrop */
+  --surface-ground: #F8FAFC;           /* Clean subtle workspace / recessed wells (Slate 50) */
+  --surface-card: #FFFFFF;             /* Pure crisp white - cards pop cleanly */
+  --surface-elevated: #F1F5F9;         /* Clean Slate 100 - micro-containers, badge backgrounds */
+  --surface-muted: #E2E8F0;            /* Clean Slate 200 - secondary buttons, track lines */
+  --surface-border: #E2E8F0;           /* Clean Slate 200 - crisp geometric border */
+  --surface-border-subtle: #F1F5F9;    /* Clean Slate 100 - subtle card dividers */
+
+  /* Ink Typography Hierarchy (Contrast > 7:1) */
+  --ink-primary: #0F172A;              /* Slate 900 - crisp deep text */
+  --ink-secondary: #334155;            /* Slate 700 - readable secondary */
+  --ink-muted: #64748B;                /* Slate 500 - informational metadata */
+  --ink-faint: #94A3B8;                /* Slate 400 - timetable ruler hour labels */
+
+  /* Signature Natural Slate Brand */
+  --brand-primary: #0F172A;            /* Slate 900 - Natural timeless dark neutral */
+  --brand-primary-hover: #1E293B;      /* Slate 800 */
+  --brand-surface: #F1F5F9;            /* Slate 100 soft natural neutral */
+  --brand-border: #E2E8F0;             /* Slate 200 clean border */
+  --brand-accent: #334155;             /* Slate 700 */
+  --brand-accent-hover: #1E293B;
+  --brand-accent-surface: #F8FAFC;
+  --brand-accent-border: #E2E8F0;
+
+  /* Class Status Signaling - Natural Slate Editorial */
+  --status-live: #0F172A;              /* Slate 900 */
+  --status-live-surface: #F1F5F9;
+  --status-live-border: #E2E8F0;
+
+  --status-retake: #334155;            /* Natural Slate Neutral */
+  --status-retake-surface: #F8FAFC;
+  --status-retake-border: #E2E8F0;
+
+  --status-conflict: #475569;          /* Slate 600 - Polished informational neutral */
+  --status-conflict-surface: #F8FAFC;  /* Slate 50 subtle paper well */
+  --status-conflict-border: #E2E8F0;   /* Slate 200 clean border */
+
+  --status-custom: #334155;            /* Slate 700 */
+  --status-custom-surface: #F1F5F9;
+  --status-custom-border: #E2E8F0;
+
+  --status-success: #334155;
+  --status-success-surface: #F8FAFC;
+  --status-success-border: #E2E8F0;
+
+  /* Elevation Shadows */
+  --shadow-paper: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 14px rgba(15, 23, 42, 0.04);
+  --shadow-card-hover: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
+  --shadow-popover: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+
+  /* Layout & Radii */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 9999px;
+
+  /* Focus & Grid Lines */
+  --brand-focus-ring: rgba(15, 23, 42, 0.15);
+  --calendar-grid-line: #F1F5F9;
+
+  /* Logo Monogram */
+  --logo-bg: #09090b;
+  --logo-ink: #ffffff;
+}
+
+.dark {
+  /* Surface Palette ("Warm Neutral Charcoal") */
+  --surface-page: #121214;             /* Soft, deep charcoal backdrop */
+  --surface-ground: #18181B;           /* Neutral charcoal workspace */
+  --surface-card: #1E1E22;             /* Comfortable charcoal cards */
+  --surface-elevated: #26262B;         /* Micro-containers, badge backgrounds */
+  --surface-muted: #303036;            /* Secondary buttons, track lines */
+  --surface-border: #333339;           /* Subtle tactile charcoal border */
+  --surface-border-subtle: #25252A;    /* Soft card dividers */
+
+  /* Ink Typography Palette (Human-balanced contrast) */
+  --ink-primary: #E4E4E7;              /* Soft balanced white (Zinc 200) - comfortable reading */
+  --ink-secondary: #A1A1AA;            /* Readable neutral gray (Zinc 400) */
+  --ink-muted: #71717A;                /* Informational metadata (Zinc 500) */
+  --ink-faint: #52525B;                /* Subtle ruler numbers (Zinc 600) */
+
+  /* Signature Brands - Natural Neutral */
+  --brand-primary: #F4F4F5;            /* Zinc 100 crisp natural in dark mode */
+  --brand-primary-hover: #FFFFFF;
+  --brand-surface: rgba(255, 255, 255, 0.08);
+  --brand-border: rgba(255, 255, 255, 0.16);
+  --brand-accent: #E4E4E7;
+  --brand-accent-hover: #F4F4F5;
+  --brand-accent-surface: rgba(255, 255, 255, 0.08);
+  --brand-accent-border: rgba(255, 255, 255, 0.16);
+
+  /* Class Status Signaling - Natural Neutral */
+  --status-live: #F4F4F5;
+  --status-live-surface: rgba(255, 255, 255, 0.08);
+  --status-live-border: rgba(255, 255, 255, 0.16);
+
+  --status-retake: #E4E4E7;
+  --status-retake-surface: rgba(255, 255, 255, 0.08);
+  --status-retake-border: rgba(255, 255, 255, 0.16);
+
+  --status-conflict: #A1A1AA;          /* Slate 400 neutral in dark mode */
+  --status-conflict-surface: rgba(148, 163, 184, 0.08);
+  --status-conflict-border: rgba(148, 163, 184, 0.22);
+
+  --status-custom: #A1A1AA;            /* Slate 400 neutral in dark mode */
+  --status-custom-surface: rgba(148, 163, 184, 0.12);
+  --status-custom-border: rgba(148, 163, 184, 0.28);
+
+  --status-success: #E4E4E7;
+  --status-success-surface: rgba(255, 255, 255, 0.08);
+  --status-success-border: rgba(255, 255, 255, 0.16);
+
+  /* Elevation Shadows */
+  --shadow-paper: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 4px 14px rgba(0, 0, 0, 0.25);
+  --shadow-card-hover: 0 8px 24px -2px rgba(0, 0, 0, 0.35);
+  --shadow-popover: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+
+  --brand-focus-ring: rgba(255, 255, 255, 0.2);
+  --calendar-grid-line: #232328;
+
+  /* Logo Monogram */
+  --logo-bg: #f4f4f5;
+  --logo-ink: #09090b;
+}
+
+@theme inline {
+  --color-page: var(--surface-page);
+  --color-ground: var(--surface-ground);
+  --color-card: var(--surface-card);
+  --color-elevated: var(--surface-elevated);
+  --color-muted: var(--surface-muted);
+  --color-border-main: var(--surface-border);
+  --color-border-subtle: var(--surface-border-subtle);
+
+  --color-ink-primary: var(--ink-primary);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-hover: var(--brand-primary-hover);
+  --color-brand-surface: var(--brand-surface);
+  --color-brand-border: var(--brand-border);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-hover: var(--brand-accent-hover);
+  --color-brand-accent-surface: var(--brand-accent-surface);
+  --color-brand-accent-border: var(--brand-accent-border);
+
+  --color-status-live: var(--status-live);
+  --color-status-live-surface: var(--status-live-surface);
+  --color-status-live-border: var(--status-live-border);
+
+  --color-status-retake: var(--status-retake);
+  --color-status-retake-surface: var(--status-retake-surface);
+  --color-status-retake-border: var(--status-retake-border);
+
+  --color-status-conflict: var(--status-conflict);
+  --color-status-conflict-surface: var(--status-conflict-surface);
+  --color-status-conflict-border: var(--status-conflict-border);
+
+  --color-status-custom: var(--status-custom);
+  --color-status-custom-surface: var(--status-custom-surface);
+  --color-status-custom-border: var(--status-custom-border);
+
+  --color-status-success: var(--status-success);
+  --color-status-success-surface: var(--status-success-surface);
+  --color-status-success-border: var(--status-success-border);
+
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-serif: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+}
+
+body {
+  background-color: var(--surface-page);
+  color: var(--ink-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Smooth View Transitions for Dark/Light Mode Switching */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+.dark::view-transition-old(root) {
+  z-index: 1;
+}
+
+.dark::view-transition-new(root) {
+  z-index: 9999;
+}
+
+/* Coordinated Smooth Fallback for browsers without View Transitions */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    fill 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    stroke 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition-delay: 0s !important;
+}
+
+/* Ambient Lighting Mesh Canvas behind body - Monochrome Neutral */
+.ambient-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 35% at 50% -8%, rgba(15, 23, 42, 0.03), transparent 75%),
+    radial-gradient(ellipse 45% 28% at 90% 102%, rgba(15, 23, 42, 0.015), transparent 70%);
+}
+
+.dark .ambient-glow {
+  background:
+    radial-gradient(ellipse 65% 40% at 50% -10%, rgba(255, 255, 255, 0.02), transparent 80%),
+    radial-gradient(ellipse 40% 25% at 92% 100%, rgba(255, 255, 255, 0.01), transparent 70%);
+}
+
+/* Paper micro-texture overlay */
+.paper-texture {
+  display: none;
+}
+
+/* Academic Card Ticket Styling */
+.ticket-card {
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.dark .ticket-card {
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-card);
+}
+
+.ticket-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.ticket-card-past {
+  filter: grayscale(0.35) saturate(0.7);
+  opacity: 0.88;
+}
+
+/* Hatched Academic Break Block */
+.hatched-break-pattern {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 8px,
+    var(--surface-muted) 8px,
+    var(--surface-muted) 16px
+  );
+}
+
+/* Universal tabular figures for numeric and time alignment */
+.tabular-nums,
+.font-mono {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Universal scrollbars across Firefox, Chrome, Safari, and Linux GTK */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-muted) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-muted);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-faint);
+}
+
+/* Stable scrollbar gutters to prevent asymmetrical layout shifting */
+.overflow-y-auto {
+  scrollbar-gutter: stable;
+}
+
+/* Completely remove native browser calendar/clock picker indicator icons */
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Clean utility to hide scrollbars when explicitly desired */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Mobile optimizations */
+html {
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Momentum scrolling for touch overflow containers */
+.overflow-x-auto,
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+button, [role="button"], a, input, select, textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area padding utilities for mobile notches & home indicator bar */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.pl-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+.pr-safe {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print optimizations */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print, .ambient-glow, .paper-texture {
+    display: none !important;
+  }
+}
+
+/* Suppress Next.js development indicator */
+[data-nextjs-dev-indicator],
+[data-nextjs-toast-wrapper],
+nextjs-portal:has([data-nextjs-dev-indicator]) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

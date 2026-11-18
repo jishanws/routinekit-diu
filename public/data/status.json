@@ -1,0 +1,11 @@
+{
+  "current_version": "V5.1",
+  "semester_id": "2026-fall",
+  "semester_label": "Fall 2026",
+  "source_date": "2026-11-15",
+  "last_successful_refresh": "2026-11-15T12:07:28.362128+00:00",
+  "is_stale": false,
+  "under_review": false,
+  "total_classes": 1631,
+  "notes": "Successfully parsed and published from DIU CSE notice (V5.1)."
+}

@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoutineKit · Timetable Hero Refinement</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          boxShadow: {
+            '2xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+            'apple': '0 4px 20px -2px rgba(0, 0, 0, 0.12), 0 2px 6px -1px rgba(0, 0, 0, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    .smooth-height {
+      transition: max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.2); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(150, 150, 150, 0.4); }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen p-3 sm:p-8 flex flex-col items-center">
+
+  <!-- ========================================== -->
+  <!-- TOP CONTROL TOOLBAR -->
+  <!-- ========================================== -->
+  <header class="w-full max-w-5xl mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 backdrop-blur-md shadow-2xl">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center font-bold text-white shadow-xs">
+        R
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-bold text-sm sm:text-base tracking-tight text-white">RoutineKit · Timetable Hero Refinement</h1>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700">Subtle Upgrade</span>
+        </div>
+        <p class="text-xs text-zinc-400 mt-0.5">Your exact existing structure (3 metric cards + teachers shelf) · Refined typography & craft</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+      <!-- Device Switcher -->
+      <div class="inline-flex p-1 bg-zinc-950 rounded-xl border border-zinc-800 text-xs font-medium">
+        <button onclick="setDevice('mobile')" id="btn-device-mobile" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-white font-semibold transition-all flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+          <span>Mobile (390px)</span>
+        </button>
+        <button onclick="setDevice('desktop')" id="btn-device-desktop" class="px-3 py-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 transition-all flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
+          <span>Desktop (PC)</span>
+        </button>
+      </div>
+
+      <!-- Quick Expand / Collapse trigger -->
+      <button onclick="toggleDetails()" class="px-3 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800 text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1.5 transition-all cursor-pointer">
+        <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-zinc-400"></i>
+        <span id="btn-toggle-label">Toggle Details</span>
+      </button>
+
+      <!-- Theme Switcher -->
+      <button onclick="toggleTheme()" class="p-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white transition-all cursor-pointer" title="Toggle Light / Dark">
+        <i data-lucide="sun-moon" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- MAIN WORKSPACE STAGE -->
+  <!-- ========================================== -->
+  <main class="w-full max-w-5xl flex justify-center items-start">
+    
+    <!-- ---------------------------------------- -->
+    <!-- 1. MOBILE PHONE FRAME (390px iPhone Frame) -->
+    <!-- ---------------------------------------- -->
+    <div id="device-frame-mobile" class="w-[390px] h-[844px] rounded-[50px] bg-black p-3.5 shadow-[0_25px_80px_rgba(0,0,0,0.85)] border-[4px] border-zinc-800 relative overflow-hidden select-none">
+      
+      <!-- iPhone Dynamic Island -->
+      <div class="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-7 bg-black rounded-full z-50 flex items-center justify-between px-2.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-zinc-900 border border-zinc-800"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-950/40"></span>
+      </div>
+
+      <!-- Phone Screen Canvas -->
+      <div id="app-screen-mobile" class="w-full h-full rounded-[40px] bg-zinc-950 text-zinc-100 overflow-hidden flex flex-col relative transition-colors duration-200">
+        
+        <!-- iOS Status Bar -->
+        <div class="pt-3 px-7 flex items-center justify-between text-xs font-semibold text-zinc-400 shrink-0">
+          <span>9:41</span>
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="signal" class="w-3.5 h-3.5"></i>
+            <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+            <i data-lucide="battery-full" class="w-4 h-4"></i>
+          </div>
+        </div>
+
+        <!-- RoutineKit Top Bar -->
+        <div class="px-5 pt-2 pb-2 flex items-center justify-between shrink-0 border-b border-zinc-800/40">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-xs text-white">R</div>
+            <span class="font-bold text-sm tracking-tight text-white font-sans">RoutineKit</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button class="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
+              <i data-lucide="bell" class="w-3.5 h-3.5"></i>
+            </button>
+            <button class="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
+              <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Phone Scrollable Body -->
+        <div class="flex-1 overflow-y-auto px-3.5 py-3 space-y-3 relative">
+          
+          <!-- ======================================================= -->
+          <!-- EXACT EXISTING HERO CARD, POLISHED & REFINED (MOBILE) -->
+          <!-- ======================================================= -->
+          <div class="rounded-2xl bg-zinc-900/90 border border-zinc-800/90 p-2.5 sm:p-3 shadow-2xs transition-all">
+            
+            <!-- Primary Row: Title + Scope Button + View Dropdown -->
+            <div class="flex items-center justify-between gap-1 w-full">
+              <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                <!-- Title -->
+                <h2 class="font-sans font-bold text-[11.5px] text-white tracking-tight shrink-0 select-none">
+                  Class Timetable
+                </h2>
+
+                <!-- Capsule Toggle Button (Exact Pill, Refined) -->
+                <button
+                  type="button"
+                  onclick="toggleDetails()"
+                  id="pill-btn-mobile"
+                  class="h-7 px-1.5 inline-flex items-center gap-1 rounded-xl border border-zinc-700/70 hover:border-zinc-600 bg-zinc-800/90 hover:bg-zinc-800 text-[11px] font-sans font-medium text-zinc-100 active:scale-95 transition-all cursor-pointer min-w-0 shrink shadow-2xs"
+                  title="Show timetable scope details"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full shrink-0 bg-zinc-400"></span>
+                  <span class="truncate whitespace-nowrap">Batch 70 · Sec A</span>
+                  <i data-lucide="chevron-down" id="pill-chevron-mobile" class="w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform duration-200"></i>
+                </button>
+              </div>
+
+              <!-- View Switcher (Mobile Dropdown Trigger) -->
+              <div class="shrink-0">
+                <button
+                  type="button"
+                  onclick="cycleMobileView()"
+                  id="mobile-view-btn"
+                  class="h-7 px-2 rounded-xl border border-zinc-800 bg-zinc-800/80 hover:bg-zinc-800 text-[11px] font-sans font-medium text-zinc-200 flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 transition-all shadow-2xs whitespace-nowrap"
+                >
+                  <span id="mobile-view-label">Agenda</span>
+                  <i data-lucide="chevron-down" class="w-3 h-3 text-zinc-400"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Optional Date Nav for Grid Views (Day / 3-Day / Week) -->
+            <div id="grid-nav-mobile" class="hidden items-center justify-between pt-2.5 mt-2.5 border-t border-zinc-800/70 text-xs">
+              <div class="flex items-center gap-1.5">
+                <div class="inline-flex items-center bg-zinc-950 border border-zinc-800 rounded-lg p-0.5">
+                  <button class="p-1 rounded-md text-zinc-400 hover:text-white"><i data-lucide="chevron-left" class="w-3.5 h-3.5"></i></button>
+                  <button class="p-1 rounded-md text-zinc-400 hover:text-white"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></button>
+                </div>
+                <span class="font-semibold text-white ml-1">Mon, Nov 17</span>
+              </div>
+              <button class="px-2 py-0.5 rounded-lg bg-zinc-800 text-zinc-300 border border-zinc-700/60 text-[11px] font-medium flex items-center gap-1">
+                <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                <span>Today</span>
+              </button>
+            </div>
+
+            <!-- ===================================================== -->
+            <!-- EXACT EXISTING DROPDOWN (Refined & Upgraded) -->
+            <!-- ===================================================== -->
+            <div id="details-panel-mobile" class="smooth-height overflow-hidden max-h-0 opacity-0">
+              <div class="pt-3 mt-2.5 border-t border-zinc-800/80 space-y-2.5">
+                
+                <!-- 1. Exact 3-Column Academic Metrics Grid (Refined) -->
+                <div class="grid grid-cols-3 gap-1.5 sm:gap-2">
+                  <!-- Courses -->
+                  <div class="bg-zinc-950/70 border border-zinc-800/80 rounded-xl p-2 sm:p-2.5 min-w-0">
+                    <div class="flex items-center gap-1 text-zinc-500 mb-0.5">
+                      <i data-lucide="book-open" class="w-3 h-3 text-zinc-500 shrink-0"></i>
+                      <span class="text-[9px] font-sans font-bold uppercase tracking-wider truncate">Courses</span>
+                    </div>
+                    <span class="text-xs font-bold font-mono text-white block tabular-nums truncate">
+                      5 Courses
+                    </span>
+                    <span class="text-[9px] text-zinc-400 block truncate mt-0.5">
+                      Enrolled
+                    </span>
+                  </div>
+
+                  <!-- Schedule -->
+                  <div class="bg-zinc-950/70 border border-zinc-800/80 rounded-xl p-1.5 sm:p-2.5 min-w-0">
+                    <div class="flex items-center gap-1 text-zinc-500 mb-0.5">
+                      <i data-lucide="clock" class="w-3 h-3 text-zinc-500 shrink-0"></i>
+                      <span class="text-[9px] font-sans font-bold uppercase tracking-wider truncate">Schedule</span>
+                    </div>
+                    <span class="text-[11px] sm:text-xs font-bold font-mono text-white block tabular-nums truncate">
+                      10 Cls/wk
+                    </span>
+                    <span class="text-[9px] text-zinc-400 block truncate mt-0.5">
+                      Weekly sessions
+                    </span>
+                  </div>
+
+                  <!-- Version -->
+                  <div class="bg-zinc-950/70 border border-zinc-800/80 rounded-xl p-1.5 min-w-0">
+                    <div class="flex items-center gap-1 text-zinc-500 mb-0.5">
+                      <i data-lucide="calendar" class="w-3 h-3 text-zinc-500 shrink-0"></i>
+                      <span class="text-[8px] font-sans font-bold uppercase tracking-wider truncate">CAC Routine</span>
+                    </div>
+                    <span class="text-[9.5px] font-bold font-mono text-white block tabular-nums truncate">
+                      Version - V5.1
+                    </span>
+                    <span class="text-[8.5px] text-zinc-400 block truncate mt-0.5">
+                      Fall 2026
+                    </span>
+                  </div>
+                </div>
+
+                <!-- 2. Adjustments & Overlap Shelf (Strict Monochrome, Green Dot Removed) -->
+                <div class="px-2.5 py-1.5 bg-zinc-950/50 border border-zinc-800/70 rounded-xl flex items-center justify-between gap-2 text-xs">
+                  <div class="flex items-center gap-1.5 text-[10px] text-zinc-400 font-sans">
+                    <span>Enrolled in standard courses</span>
+                  </div>
+                  <span class="text-[10px] font-mono text-zinc-500">0 Overlaps</span>
+                </div>
+
+                <!-- 3. Exact Teachers Shelf (Refined circular pictures with name below) -->
+                <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-2.5 space-y-2">
+                  <!-- Header Row -->
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 text-zinc-400">
+                      <i data-lucide="user" class="w-3.5 h-3.5 text-zinc-400 shrink-0"></i>
+                      <span class="text-[10px] font-sans font-bold uppercase tracking-wider">
+                        Teachers
+                      </span>
+                      <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-zinc-900 text-zinc-200 border border-zinc-800 tabular-nums">
+                        4
+                      </span>
+                    </div>
+                    <span class="text-[10px] font-sans text-zinc-500">
+                      Faculty in routine
+                    </span>
+                  </div>
+
+                  <!-- Teacher Profiles List: Circular Picture with Name Below -->
+                  <div class="flex items-center gap-3.5 pt-0.5 overflow-x-auto pb-1">
+                    <!-- DMR -->
+                    <div class="flex flex-col items-center gap-1 group cursor-pointer active:scale-95 transition-all select-none shrink-0" title="Faculty: DMR">
+                      <div class="w-11 h-11 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 border-2 border-zinc-700/80 group-hover:border-zinc-500 flex items-center justify-center shrink-0 font-sans font-bold text-sm text-white shadow-2xs transition-colors">
+                        D
+                      </div>
+                      <span class="font-mono text-xs font-bold text-zinc-200 tracking-tight text-center truncate max-w-[60px]">
+                        DMR
+                      </span>
+                    </div>
+
+                    <!-- FMA -->
+                    <div class="flex flex-col items-center gap-1 group cursor-pointer active:scale-95 transition-all select-none shrink-0" title="Faculty: FMA">
+                      <div class="w-11 h-11 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 border-2 border-zinc-700/80 group-hover:border-zinc-500 flex items-center justify-center shrink-0 font-sans font-bold text-sm text-white shadow-2xs transition-colors">
+                        F
+                      </div>
+                      <span class="font-mono text-xs font-bold text-zinc-200 tracking-tight text-center truncate max-w-[60px]">
+                        FMA
+                      </span>
+                    </div>
+
+                    <!-- SAR -->
+                    <div class="flex flex-col items-center gap-1 group cursor-pointer active:scale-95 transition-all select-none shrink-0" title="Faculty: SAR">
+                      <div class="w-11 h-11 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 border-2 border-zinc-700/80 group-hover:border-zinc-500 flex items-center justify-center shrink-0 font-sans font-bold text-sm text-white shadow-2xs transition-colors">
+                        S
+                      </div>
+                      <span class="font-mono text-xs font-bold text-zinc-200 tracking-tight text-center truncate max-w-[60px]">
+                        SAR
+                      </span>
+                    </div>
+
+                    <!-- SMN -->
+                    <div class="flex flex-col items-center gap-1 group cursor-pointer active:scale-95 transition-all select-none shrink-0" title="Faculty: SMN">
+                      <div class="w-11 h-11 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 border-2 border-zinc-700/80 group-hover:border-zinc-500 flex items-center justify-center shrink-0 font-sans font-bold text-sm text-white shadow-2xs transition-colors">
+                        S
+                      </div>
+                      <span class="font-mono text-xs font-bold text-zinc-200 tracking-tight text-center truncate max-w-[60px]">
+                        SMN
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Weekly Day Picker -->
+          <div class="flex items-center justify-between p-1.5 rounded-xl bg-zinc-900/60 border border-zinc-800/70 text-xs">
+            <div class="text-center px-2 py-1 text-zinc-500 font-bold"><span class="block text-[9px]">SAT</span>14</div>
+            <div class="text-center px-2 py-1 text-zinc-500 font-bold"><span class="block text-[9px]">SUN</span>15</div>
+            <div class="text-center px-2 py-1 text-zinc-500 font-bold"><span class="block text-[9px]">MON</span>16</div>
+            <div class="text-center px-3 py-1 bg-white text-zinc-950 rounded-lg font-bold shadow-xs"><span class="block text-[9px]">TUE</span>17</div>
+            <div class="text-center px-2 py-1 text-zinc-500 font-bold"><span class="block text-[9px]">WED</span>18</div>
+            <div class="text-center px-2 py-1 text-zinc-500 font-bold"><span class="block text-[9px]">THU</span>19</div>
+          </div>
+
+          <!-- Sample Class Cards in Timeline -->
+          <div class="space-y-2 pt-1">
+            <div class="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 space-y-1.5 shadow-2xs">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-sm tracking-tight text-white font-sans">BNS101 <span class="text-xs font-normal text-zinc-400 font-mono">70_A</span></span>
+                <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/60">SMN</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-mono text-zinc-400 pt-1 border-t border-zinc-800/60">
+                <span class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3 text-zinc-500"></i> ANX1-208</span>
+                <span>10:00 AM – 11:30 AM</span>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 space-y-1.5 shadow-2xs">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-sm tracking-tight text-white font-sans">MAT211 <span class="text-xs font-normal text-zinc-400 font-mono">70_A</span></span>
+                <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/60">SAR</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-mono text-zinc-400 pt-1 border-t border-zinc-800/60">
+                <span class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3 text-zinc-500"></i> ANX1-101</span>
+                <span>11:30 AM – 1:00 PM</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Home Bar -->
+        <div class="pb-2 pt-1 flex justify-center shrink-0">
+          <div class="w-32 h-1 bg-zinc-600 rounded-full"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------------------------------------- -->
+    <!-- 2. DESKTOP / PC WINDOW FRAME -->
+    <!-- ---------------------------------------- -->
+    <div id="device-frame-desktop" class="w-full max-w-4xl rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl overflow-hidden hidden select-none">
+      
+      <!-- Mac Window Titlebar Chrome -->
+      <div class="px-4 py-3 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-rose-500/80"></span>
+          <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+          <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+        </div>
+        <div class="px-6 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-400 flex items-center gap-2">
+          <i data-lucide="lock" class="w-3 h-3 text-zinc-500"></i>
+          <span>routinekit.app/schedule</span>
+        </div>
+        <div class="w-12"></div>
+      </div>
+
+      <!-- Desktop App Screen -->
+      <div id="app-screen-desktop" class="p-6 bg-zinc-950 text-zinc-100 min-h-[640px] space-y-4">
+        
+        <!-- ======================================================= -->
+        <!-- EXACT EXISTING HERO CARD, POLISHED & REFINED (DESKTOP) -->
+        <!-- ======================================================= -->
+        <div class="rounded-2xl bg-zinc-900/90 border border-zinc-800/90 p-3 shadow-2xs transition-all">
+          
+          <!-- Primary Desktop Row: Title + Scope Pill + Grid Navigation + Segmented Switcher -->
+          <div class="flex items-center justify-between gap-4">
+            
+            <!-- Left Group: Title + Scope Button + Date Navigation -->
+            <div class="flex items-center gap-3">
+              <h2 class="font-sans font-bold text-base text-white tracking-tight shrink-0 select-none">
+                Class Timetable
+              </h2>
+
+              <!-- Scope / Batch Details Toggle Button (Refined) -->
+              <button
+                type="button"
+                onclick="toggleDetails()"
+                id="pill-btn-desktop"
+                class="h-8 px-3 inline-flex items-center gap-2 rounded-xl border border-zinc-700/70 hover:border-zinc-600 bg-zinc-800/90 hover:bg-zinc-800 text-xs font-sans font-medium text-zinc-100 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                title="Show timetable scope details"
+              >
+                <span class="w-1.5 h-1.5 rounded-full shrink-0 bg-zinc-400"></span>
+                <span>Batch 70 · Sec A</span>
+                <i data-lucide="chevron-down" id="pill-chevron-desktop" class="w-3.5 h-3.5 text-zinc-400 shrink-0 transition-transform duration-200"></i>
+              </button>
+
+              <!-- Optional Date Nav for Grid Modes -->
+              <div id="grid-nav-desktop" class="hidden items-center gap-2 pl-2 border-l border-zinc-800">
+                <div class="inline-flex items-center bg-zinc-950 border border-zinc-800 rounded-lg p-0.5">
+                  <button class="p-1 rounded-md text-zinc-400 hover:text-white"><i data-lucide="chevron-left" class="w-3.5 h-3.5"></i></button>
+                  <button class="p-1 rounded-md text-zinc-400 hover:text-white"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></button>
+                </div>
+                <span class="text-xs font-sans font-semibold text-white">Nov 15 – 20, 2026</span>
+                <button class="px-2 py-0.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700/60 hover:text-white flex items-center gap-1">
+                  <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                  <span>Today</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Group: Segmented View Switcher -->
+            <div class="inline-flex p-1 rounded-xl bg-zinc-950 border border-zinc-800 text-xs font-medium shrink-0">
+              <button onclick="setDesktopView('agenda')" id="dsk-view-agenda" class="px-3 py-1 rounded-lg bg-zinc-800 text-white font-semibold transition-all">Agenda</button>
+              <button onclick="setDesktopView('day')" id="dsk-view-day" class="px-3 py-1 rounded-lg text-zinc-400 hover:text-white transition-all">Day</button>
+              <button onclick="setDesktopView('three-day')" id="dsk-view-three-day" class="px-3 py-1 rounded-lg text-zinc-400 hover:text-white transition-all">3 Days</button>
+              <button onclick="setDesktopView('week')" id="dsk-view-week" class="px-3 py-1 rounded-lg text-zinc-400 hover:text-white transition-all">Week</button>
+            </div>
+          </div>
+
+          <!-- ===================================================== -->
+          <!-- EXACT EXISTING DROPDOWN (Refined & Upgraded for Desktop) -->
+          <!-- ===================================================== -->
+          <div id="details-panel-desktop" class="smooth-height overflow-hidden max-h-0 opacity-0">
+            <div class="pt-3 mt-3 border-t border-zinc-800/80 space-y-3">
+              
+              <!-- 1. 3-Column Academic Metrics Grid -->
+              <div class="grid grid-cols-3 gap-2.5">
+                <!-- Courses -->
+                <div class="bg-zinc-950/70 border border-zinc-800/80 rounded-xl p-3 min-w-0">
+                  <div class="flex items-center gap-1.5 text-zinc-500 mb-1">
+                    <i data-lucide="book-open" class="w-3.5 h-3.5 text-zinc-500 shrink-0"></i>
+                    <span class="text-[10px] font-sans font-bold uppercase tracking-wider truncate">Courses</span>
+                  </div>
+                  <span class="text-sm font-bold font-mono text-white block tabular-nums truncate">
+                    5 Courses
+                  </span>
+                  <span class="text-[10px] text-zinc-400 block truncate mt-0.5">
+                    Enrolled
+                  </span>
+                </div>
+
+                <!-- Schedule -->
+                <div class="bg-zinc-950/70 border border-zinc-800/80 rounded-xl p-3 min-w-0">
+                  <div class="flex items-center gap-1.5 text-zinc-500 mb-1">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-zinc-500 shrink-0"></i>
+                    <span class="text-[10px] font-sans font-bold uppercase tracking-wider truncate">Schedule</span>
+                  </div>
+                  <span class="text-sm font-bold font-mono text-white block tabular-nums truncate">
+                    10 Cls / wk
+                  </span>
+                  <span class="text-[10px] text-zinc-400 block truncate mt-0.5">
+                    Weekly sessions
+                  </span>
+                </div>
+
+                <!-- Version -->
+                <div class="bg-zinc-950/70 border border-zinc-800/80 rounded-xl p-3 min-w-0">
+                  <div class="flex items-center gap-1.5 text-zinc-500 mb-1">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-zinc-500 shrink-0"></i>
+                    <span class="text-[10px] font-sans font-bold uppercase tracking-wider truncate">CAC Routine</span>
+                  </div>
+                  <span class="text-sm font-bold font-mono text-white block truncate">
+                    Version - V5.1
+                  </span>
+                  <span class="text-[10px] text-zinc-400 block truncate mt-0.5">
+                    Fall 2026
+                  </span>
+                </div>
+              </div>
+
+              <!-- 2. Adjustments & Overlap Shelf (Strict Monochrome, Green Dot Removed) -->
+              <div class="px-3 py-2 bg-zinc-950/50 border border-zinc-800/70 rounded-xl flex items-center justify-between gap-2.5 text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-zinc-300 font-sans">Enrolled in all standard courses for Batch 70, Section A</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs font-mono text-zinc-400">
+                  <span>0 Overlaps</span>
+                </div>
+              </div>
+
+              <!-- 3. Teachers / Faculty Shelf -->
+              <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3 space-y-2.5">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-1.5 text-zinc-400">
+                    <i data-lucide="user" class="w-3.5 h-3.5 text-zinc-400 shrink-0"></i>
+                    <span class="text-[10px] font-sans font-bold uppercase tracking-wider">
+                      Teachers
+                    </span>
+                    <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-zinc-900 text-zinc-200 border border-zinc-800 tabular-nums">
+                      4
+                    </span>
+                  </div>
+                  <span class="text-[10px] font-sans text-zinc-500">
+                    Faculty in routine · Profiles coming soon
+                  </span>
+                </div>
+
+                <!-- Teacher Profiles List: Circular Picture with Name Below -->
+                <div class="flex items-center gap-5 pt-0.5">
+                  <!-- DMR -->
+                  <div class="flex flex-col items-center gap-1.5 group cursor-pointer active:scale-95 transition-all select-none" title="Faculty: DMR · Profile coming soon">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 border-2 border-zinc-700/80 group-hover:border-zinc-500 flex items-center justify-center shrink-0 font-sans font-bold text-base text-white shadow-2xs transition-colors">
+                      D
+                    </div>
+                    <span class="font-mono text-xs font-bold text-zinc-200 tracking-tight text-center truncate max-w-[72px]">
+                      DMR
+                    </span>
+                  </div>
+
+                  <!-- FMA -->
+                  <div class="flex flex-col items-center gap-1.5 group cursor-pointer active:scale-95 transition-all select-none" title="Faculty: FMA · Profile coming soon">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 border-2 border-zinc-700/80 group-hover:border-zinc-500 flex items-center justify-center shrink-0 font-sans font-bold text-base text-white shadow-2xs transition-colors">
+                      F
+                    </div>
+                    <span class="font-mono text-xs font-bold text-zinc-200 tracking-tight text-center truncate max-w-[72px]">
+                      FMA
+                    </span>
+                  </div>
+
+                  <!-- SAR -->
+                  <div class="flex flex-col items-center gap-1.5 group cursor-pointer active:scale-95 transition-all select-none" title="Faculty: SAR · Profile coming soon">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 border-2 border-zinc-700/80 group-hover:border-zinc-500 flex items-center justify-center shrink-0 font-sans font-bold text-base text-white shadow-2xs transition-colors">
+                      S
+                    </div>
+                    <span class="font-mono text-xs font-bold text-zinc-200 tracking-tight text-center truncate max-w-[72px]">
+                      SAR
+                    </span>
+                  </div>
+
+                  <!-- SMN -->
+                  <div class="flex flex-col items-center gap-1.5 group cursor-pointer active:scale-95 transition-all select-none" title="Faculty: SMN · Profile coming soon">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 border-2 border-zinc-700/80 group-hover:border-zinc-500 flex items-center justify-center shrink-0 font-sans font-bold text-base text-white shadow-2xs transition-colors">
+                      S
+                    </div>
+                    <span class="font-mono text-xs font-bold text-zinc-200 tracking-tight text-center truncate max-w-[72px]">
+                      SMN
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop Timetable Content Grid -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-2">
+            <span class="text-xs font-bold text-zinc-400 block font-mono">Tuesday · 10:00 AM – 11:30 AM</span>
+            <h4 class="font-bold text-base text-white">BNS101 · Bangladesh Studies</h4>
+            <p class="text-xs text-zinc-400 font-mono">Room ANX1-208 · Faculty: SMN</p>
+          </div>
+          <div class="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-2">
+            <span class="text-xs font-bold text-zinc-400 block font-mono">Tuesday · 11:30 AM – 01:00 PM</span>
+            <h4 class="font-bold text-base text-white">MAT211 · Linear Algebra</h4>
+            <p class="text-xs text-zinc-400 font-mono">Room ANX1-101 · Faculty: SAR</p>
+          </div>
+          <div class="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-2">
+            <span class="text-xs font-bold text-zinc-400 block font-mono">Tuesday · 01:00 PM – 02:30 PM</span>
+            <h4 class="font-bold text-base text-white">CSE214 · Algorithms Lab</h4>
+            <p class="text-xs text-zinc-400 font-mono">Room G1-006 · Faculty: FMA</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT CONTROLLERS -->
+  <!-- ========================================== -->
+  <script>
+    let isExpanded = true;
+    let currentDevice = 'mobile';
+    let isDark = true;
+    let mobileViewIndex = 0;
+    const mobileViews = ['Agenda', 'Day', '3 Days', 'Week'];
+
+    // Initialize expanded by default so user immediately sees the refined interior
+    window.addEventListener('DOMContentLoaded', () => {
+      const pMob = document.getElementById('details-panel-mobile');
+      const pDsk = document.getElementById('details-panel-desktop');
+      const chevMob = document.getElementById('pill-chevron-mobile');
+      const chevDsk = document.getElementById('pill-chevron-desktop');
+      const lbl = document.getElementById('btn-toggle-label');
+
+      pMob.classList.remove('max-h-0', 'opacity-0');
+      pMob.classList.add('max-h-[600px]', 'opacity-100');
+      pDsk.classList.remove('max-h-0', 'opacity-0');
+      pDsk.classList.add('max-h-[600px]', 'opacity-100');
+      chevMob.classList.add('rotate-180');
+      chevDsk.classList.add('rotate-180');
+      lbl.textContent = 'Collapse Details';
+    });
+
+    function setDevice(device) {
+      currentDevice = device;
+      const mFrame = document.getElementById('device-frame-mobile');
+      const dFrame = document.getElementById('device-frame-desktop');
+      const btnM = document.getElementById('btn-device-mobile');
+      const btnD = document.getElementById('btn-device-desktop');
+
+      if (device === 'mobile') {
+        mFrame.classList.remove('hidden');
+        dFrame.classList.add('hidden');
+        btnM.classList.add('bg-zinc-800', 'text-white', 'font-semibold');
+        btnM.classList.remove('text-zinc-400');
+        btnD.classList.remove('bg-zinc-800', 'text-white', 'font-semibold');
+        btnD.classList.add('text-zinc-400');
+      } else {
+        mFrame.classList.add('hidden');
+        dFrame.classList.remove('hidden');
+        btnD.classList.add('bg-zinc-800', 'text-white', 'font-semibold');
+        btnD.classList.remove('text-zinc-400');
+        btnM.classList.remove('bg-zinc-800', 'text-white', 'font-semibold');
+        btnM.classList.add('text-zinc-400');
+      }
+    }
+
+    function toggleDetails() {
+      isExpanded = !isExpanded;
+      const pMob = document.getElementById('details-panel-mobile');
+      const pDsk = document.getElementById('details-panel-desktop');
+      const chevMob = document.getElementById('pill-chevron-mobile');
+      const chevDsk = document.getElementById('pill-chevron-desktop');
+      const lbl = document.getElementById('btn-toggle-label');
+
+      if (isExpanded) {
+        pMob.classList.remove('max-h-0', 'opacity-0');
+        pMob.classList.add('max-h-[600px]', 'opacity-100');
+        pDsk.classList.remove('max-h-0', 'opacity-0');
+        pDsk.classList.add('max-h-[600px]', 'opacity-100');
+
+        chevMob.classList.add('rotate-180');
+        chevDsk.classList.add('rotate-180');
+        lbl.textContent = 'Collapse Details';
+      } else {
+        pMob.classList.remove('max-h-[600px]', 'opacity-100');
+        pMob.classList.add('max-h-0', 'opacity-0');
+        pDsk.classList.remove('max-h-[600px]', 'opacity-100');
+        pDsk.classList.add('max-h-0', 'opacity-0');
+
+        chevMob.classList.remove('rotate-180');
+        chevDsk.classList.remove('rotate-180');
+        lbl.textContent = 'Expand Details';
+      }
+    }
+
+    function cycleMobileView() {
+      mobileViewIndex = (mobileViewIndex + 1) % mobileViews.length;
+      const mode = mobileViews[mobileViewIndex];
+      document.getElementById('mobile-view-label').textContent = mode;
+      
+      const gridNav = document.getElementById('grid-nav-mobile');
+      if (mode === 'Agenda') {
+        gridNav.classList.add('hidden');
+        gridNav.classList.remove('flex');
+      } else {
+        gridNav.classList.remove('hidden');
+        gridNav.classList.add('flex');
+      }
+    }
+
+    function setDesktopView(mode) {
+      const modes = ['agenda', 'day', 'three-day', 'week'];
+      modes.forEach(m => {
+        const btn = document.getElementById('dsk-view-' + m);
+        if (m === mode) {
+          btn.classList.add('bg-zinc-800', 'text-white', 'font-semibold');
+          btn.classList.remove('text-zinc-400');
+        } else {
+          btn.classList.remove('bg-zinc-800', 'text-white', 'font-semibold');
+          btn.classList.add('text-zinc-400');
+        }
+      });
+
+      const gridNav = document.getElementById('grid-nav-desktop');
+      if (mode === 'agenda') {
+        gridNav.classList.add('hidden');
+        gridNav.classList.remove('flex');
+      } else {
+        gridNav.classList.remove('hidden');
+        gridNav.classList.add('flex');
+      }
+    }
+
+    function toggleTheme() {
+      isDark = !isDark;
+      const mApp = document.getElementById('app-screen-mobile');
+      const dApp = document.getElementById('app-screen-desktop');
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        mApp.classList.remove('bg-zinc-100', 'text-zinc-900');
+        mApp.classList.add('bg-zinc-950', 'text-zinc-100');
+        dApp.classList.remove('bg-zinc-100', 'text-zinc-900');
+        dApp.classList.add('bg-zinc-950', 'text-zinc-100');
+      } else {
+        document.documentElement.classList.remove('dark');
+        mApp.classList.add('bg-zinc-100', 'text-zinc-900');
+        mApp.classList.remove('bg-zinc-950', 'text-zinc-100');
+        dApp.classList.add('bg-zinc-100', 'text-zinc-900');
+        dApp.classList.remove('bg-zinc-950', 'text-zinc-100');
+      }
+    }
+
+    lucide.createIcons();
+  </script>
+</body>
+</html>
