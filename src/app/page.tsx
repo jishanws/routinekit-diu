@@ -19,11 +19,15 @@ import { loadSavedSetup, saveSetup, DEFAULT_SETUP } from "@/lib/storage/setupSto
 import AppShell from "@/components/layout/AppShell";
 import TimetableShell from "@/components/timetable/TimetableShell";
 import VersionNoticeBanner from "@/components/setup/VersionNoticeBanner";
+import SharedScheduleBanner from "@/components/share/SharedScheduleBanner";
+import { parseShareUrl } from "@/lib/routine/shareUrl";
+import { toast } from "sonner";
 import dynamic from "next/dynamic";
 
 const SetupModal = dynamic(() => import("@/components/setup/SetupModal"), { ssr: false });
 const ImportExportModal = dynamic(() => import("@/components/setup/ImportExportModal"), { ssr: false });
 const ExportModal = dynamic(() => import("@/components/export/ExportModal"), { ssr: false });
+const ShareModal = dynamic(() => import("@/components/share/ShareModal"), { ssr: false });
 
 export default function Home() {
   const [routine, setRoutine] = useState<PublishedRoutine | null>(null);
@@ -34,6 +38,8 @@ export default function Home() {
   const [isSetupOpen, setIsSetupOpen] = useState(false);
   const [isPortabilityOpen, setIsPortabilityOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [incomingShared, setIncomingShared] = useState<{ setup: StudentSetup; title: string } | null>(null);
   const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
@@ -192,10 +198,82 @@ export default function Home() {
     };
   }, [routine]);
 
+  // Check and handle incoming share links (hash #share=... or #s=... or query params)
+  useEffect(() => {
+    const handleCheckShare = () => {
+      if (typeof window === "undefined") return;
+      const parsed = parseShareUrl(window.location.href);
+      if (!parsed) return;
+
+      const currentSaved = loadSavedSetup();
+      const isDefault =
+        !currentSaved ||
+        ((!currentSaved.batch || currentSaved.batch === "none") &&
+          (!currentSaved.courses || currentSaved.courses.length === 0));
+
+      if (isDefault) {
+        // Automatically adopt if user had no previous routine setup
+        let targetSetup = parsed.setup;
+        if (
+          routine &&
+          targetSetup.mode === "batch-section" &&
+          targetSetup.batch &&
+          targetSetup.batch !== "none" &&
+          targetSetup.section &&
+          targetSetup.section !== "none" &&
+          (!targetSetup.courses || targetSetup.courses.length === 0)
+        ) {
+          const batchCourses = getCoursesForBatchAndSection(
+            routine,
+            targetSetup.batch,
+            targetSetup.section
+          );
+          if (batchCourses.length > 0) {
+            targetSetup = { ...targetSetup, courses: batchCourses };
+          }
+        }
+        setSetup(targetSetup);
+        saveSetup(targetSetup);
+        toast.success(`Loaded shared timetable: ${parsed.title}`);
+        window.history.replaceState(null, "", window.location.pathname);
+      } else {
+        // User has an existing routine: display preview banner with option to save or keep
+        let previewSetup = parsed.setup;
+        if (
+          routine &&
+          previewSetup.mode === "batch-section" &&
+          previewSetup.batch &&
+          previewSetup.batch !== "none" &&
+          previewSetup.section &&
+          previewSetup.section !== "none" &&
+          (!previewSetup.courses || previewSetup.courses.length === 0)
+        ) {
+          const batchCourses = getCoursesForBatchAndSection(
+            routine,
+            previewSetup.batch,
+            previewSetup.section
+          );
+          if (batchCourses.length > 0) {
+            previewSetup = { ...previewSetup, courses: batchCourses };
+          }
+        }
+        setIncomingShared({ setup: previewSetup, title: parsed.title });
+      }
+    };
+
+    handleCheckShare();
+    window.addEventListener("hashchange", handleCheckShare);
+    return () => {
+      window.removeEventListener("hashchange", handleCheckShare);
+    };
+  }, [routine]);
+
+  const activeSetup = incomingShared ? incomingShared.setup : setup;
+
   const derivedSchedule = useMemo(() => {
     if (!routine) return { items: [], conflicts: [], unmatchedSelections: [] };
-    return derivePersonalSchedule(routine, setup);
-  }, [routine, setup]);
+    return derivePersonalSchedule(routine, activeSetup);
+  }, [routine, activeSetup]);
 
   const versionDrift = useMemo(() => {
     if (!routine) {
@@ -207,12 +285,30 @@ export default function Home() {
         customCourseCount: 0,
       };
     }
-    return checkRoutineVersionDrift(setup, routine);
-  }, [routine, setup]);
+    return checkRoutineVersionDrift(activeSetup, routine);
+  }, [routine, activeSetup]);
 
   const handleSaveSetup = (newSetup: StudentSetup) => {
     setSetup(newSetup);
     saveSetup(newSetup);
+  };
+
+  const handleApplyShared = () => {
+    if (!incomingShared) return;
+    setSetup(incomingShared.setup);
+    saveSetup(incomingShared.setup);
+    toast.success(`Saved shared timetable: ${incomingShared.title}`);
+    setIncomingShared(null);
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  };
+
+  const handleDismissShared = () => {
+    setIncomingShared(null);
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
   };
 
   const handleSaveOverride = (classId: string, override: ClassCustomOverride) => {
@@ -300,8 +396,8 @@ export default function Home() {
   };
 
   const cohortLabel = useMemo(() => {
-    const hasBatch = setup.batch && setup.batch !== "none";
-    const hasSection = setup.section && setup.section !== "none";
+    const hasBatch = activeSetup.batch && activeSetup.batch !== "none";
+    const hasSection = activeSetup.section && activeSetup.section !== "none";
 
     // 1. Custom courses
     const customCourses = new Set(
@@ -324,7 +420,7 @@ export default function Home() {
           (item) =>
             !item.isRetake &&
             !item.isCustom &&
-            !isBaseCohortClass(item, setup.batch, setup.section)
+            !isBaseCohortClass(item, activeSetup.batch, activeSetup.section)
         )
         .map((item) => item.courseCode)
     );
@@ -332,11 +428,11 @@ export default function Home() {
 
     let base = "Not Configured";
     if (hasBatch && hasSection) {
-      base = `Batch ${setup.batch}_${setup.section}`;
+      base = `Batch ${activeSetup.batch}_${activeSetup.section}`;
     } else if (hasBatch) {
-      base = `Batch ${setup.batch}`;
-    } else if (setup.courses.length > 0) {
-      base = `${setup.courses.length} course${setup.courses.length > 1 ? "s" : ""}`;
+      base = `Batch ${activeSetup.batch}`;
+    } else if (activeSetup.courses.length > 0) {
+      base = `${activeSetup.courses.length} course${activeSetup.courses.length > 1 ? "s" : ""}`;
     }
 
     const tags: string[] = [];
@@ -351,11 +447,11 @@ export default function Home() {
     }
 
     return tags.length > 0 ? `${base} (${tags.join(", ")})` : base;
-  }, [derivedSchedule.items, setup.batch, setup.section, setup.courses.length]);
+  }, [derivedSchedule.items, activeSetup.batch, activeSetup.section, activeSetup.courses.length]);
 
   const cohortBreakdown = useMemo((): CohortBreakdown => {
-    const hasBatch = setup.batch && setup.batch !== "none";
-    const hasSection = setup.section && setup.section !== "none";
+    const hasBatch = activeSetup.batch && activeSetup.batch !== "none";
+    const hasSection = activeSetup.section && activeSetup.section !== "none";
 
     // 1. Custom courses
     const customCourses = new Set(
@@ -378,7 +474,7 @@ export default function Home() {
           (item) =>
             !item.isRetake &&
             !item.isCustom &&
-            !isBaseCohortClass(item, setup.batch, setup.section)
+            !isBaseCohortClass(item, activeSetup.batch, activeSetup.section)
         )
         .map((item) => item.courseCode)
     );
@@ -386,27 +482,27 @@ export default function Home() {
 
     let base = "Not Configured";
     if (hasBatch && hasSection) {
-      base = `Batch ${setup.batch} · ${setup.section}`;
+      base = `Batch ${activeSetup.batch} · ${activeSetup.section}`;
     } else if (hasBatch) {
-      base = `Batch ${setup.batch}`;
-    } else if (setup.courses.length > 0) {
-      base = `${setup.courses.length} Course${setup.courses.length > 1 ? "s" : ""}`;
+      base = `Batch ${activeSetup.batch}`;
+    } else if (activeSetup.courses.length > 0) {
+      base = `${activeSetup.courses.length} Course${activeSetup.courses.length > 1 ? "s" : ""}`;
     }
 
     const totalCoursesCnt = new Set(derivedSchedule.items.map((i) => i.courseCode)).size;
 
     return {
       baseLabel: base,
-      batch: setup.batch && setup.batch !== "none" ? setup.batch : undefined,
-      section: setup.section && setup.section !== "none" ? setup.section : undefined,
-      mode: setup.mode,
+      batch: activeSetup.batch && activeSetup.batch !== "none" ? activeSetup.batch : undefined,
+      section: activeSetup.section && activeSetup.section !== "none" ? activeSetup.section : undefined,
+      mode: activeSetup.mode,
       retakeCount: retakeCnt,
       othersCount: othersCnt,
       customCount: customCnt,
       conflictCount: derivedSchedule.conflicts.length,
       semesterLabel: routine?.semester_label,
       routineVersion: routine?.routine_version,
-      totalCoursesCount: totalCoursesCnt || setup.courses.length || 0,
+      totalCoursesCount: totalCoursesCnt || activeSetup.courses.length || 0,
       classesPerWeek: derivedSchedule.items.length,
       retakeCourses: Array.from(retakeCourses),
       customCourses: Array.from(customCourses),
@@ -415,10 +511,10 @@ export default function Home() {
   }, [
     derivedSchedule.items,
     derivedSchedule.conflicts.length,
-    setup.batch,
-    setup.section,
-    setup.mode,
-    setup.courses.length,
+    activeSetup.batch,
+    activeSetup.section,
+    activeSetup.mode,
+    activeSetup.courses.length,
     routine?.semester_label,
     routine?.routine_version,
   ]);
@@ -427,6 +523,7 @@ export default function Home() {
     <AppShell
       onOpenSetup={() => setIsSetupOpen(true)}
       onOpenExport={() => setIsExportOpen(true)}
+      onOpenShare={() => setIsShareOpen(true)}
       routine={routine}
       versionDrift={versionDrift}
       onAcknowledgeVersion={handleAcknowledgeVersion}
@@ -446,7 +543,17 @@ export default function Home() {
           <p className="text-sm text-[var(--ink-secondary)] mt-1">{error}</p>
         </div>
       ) : routine ? (
-        <div className="space-y-6">
+        <div className="space-y-4">
+          {/* Incoming Shared Routine Banner */}
+          {incomingShared && (
+            <SharedScheduleBanner
+              sharedSetup={incomingShared.setup}
+              title={incomingShared.title}
+              onApply={handleApplyShared}
+              onDismiss={handleDismissShared}
+            />
+          )}
+
           {/* Version Notice Banner if routine drift detected */}
           {versionDrift.hasDrift && (
             <VersionNoticeBanner
@@ -493,13 +600,23 @@ export default function Home() {
             />
           )}
 
+          {isShareOpen && (
+            <ShareModal
+              setup={activeSetup}
+              items={derivedSchedule.items}
+              isOpen={isShareOpen}
+              onClose={() => setIsShareOpen(false)}
+            />
+          )}
+
           {isExportOpen && (
             <ExportModal
               routine={routine}
-              setup={setup}
+              setup={activeSetup}
               items={derivedSchedule.items}
               isOpen={isExportOpen}
               onClose={() => setIsExportOpen(false)}
+              onOpenShare={() => setIsShareOpen(true)}
             />
           )}
 

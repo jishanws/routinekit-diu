@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx scripts/test-schedule.mjs && tsx scripts/test-exports.mjs"
+    "test": "tsx scripts/test-schedule.mjs && tsx scripts/test-exports.mjs && tsx scripts/test-share-url.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.3.1",

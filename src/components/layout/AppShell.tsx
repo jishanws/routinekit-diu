@@ -9,12 +9,14 @@ import {
   SlidersIcon,
   DownloadIcon,
   BellIcon,
+  ShareIcon,
 } from "@/components/ui/Icons";
 import { PublishedRoutine } from "@/types/routine";
 
 interface AppShellProps {
   onOpenSetup?: () => void;
   onOpenExport?: () => void;
+  onOpenShare?: () => void;
   routine?: PublishedRoutine | null;
   versionDrift?: {
     hasDrift: boolean;
@@ -33,6 +35,7 @@ interface AppShellProps {
 export default function AppShell({
   onOpenSetup,
   onOpenExport,
+  onOpenShare,
   routine,
   versionDrift,
   onAcknowledgeVersion,
@@ -74,6 +77,18 @@ export default function AppShell({
             >
               <SlidersIcon className="w-3.5 h-3.5 text-[var(--brand-primary)] shrink-0" />
               <span className="hidden sm:inline">Setup</span>
+            </button>
+
+            {/* Share Button */}
+            <button
+              type="button"
+              onClick={onOpenShare}
+              title="Share Timetable"
+              aria-label="Share Timetable"
+              className="h-8.5 sm:h-9 px-2 sm:px-3 rounded-xl border border-[var(--surface-border)] bg-[var(--surface-card)] hover:bg-[var(--surface-elevated)] text-[var(--ink-secondary)] hover:text-[var(--ink-primary)] text-xs font-medium transition-all cursor-pointer shadow-2xs active:scale-95 flex items-center justify-center gap-1.5 shrink-0"
+            >
+              <ShareIcon className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">Share</span>
             </button>
 
             {/* Export Button */}

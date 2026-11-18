@@ -49,6 +49,7 @@ RoutineKit turns complex, multi-page university routine PDFs into a clean, insta
 ## ✨ Features
 
 - **🎯 1-Click Cohort Enrollment** — Select your Batch and Section (e.g. `Batch 66 · Section D`) to populate your full academic week with zero manual entry.
+- **🔗 1-Click Schedule Share & Instant QR** — Share your exact routine (standard cohorts or custom retakes) via compact URL (`#s=66_D` or `#share=...`) or scan directly with phone camera to load on mobile in 1 second.
 - **⚡ Search & Add Modular Courses** — Add retake sections (`RE_A(3C)`), evening sections, or custom courses across different batches with instant search.
 - **🛡️ Conflict & Overlap Detection** — Automatic interval detection warns students if two selected courses or lab sessions overlap in the timetable.
 - **☕ Clean Break Indicators** — Gaps between classes are gracefully calculated and rendered with subtle duration indicators (no clutter).
