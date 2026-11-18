@@ -23,8 +23,12 @@ export interface CompactSharePayload {
  * Base64URL string encoding with full UTF-8 Unicode support.
  */
 export function encodeBase64Url(str: string): string {
-  if (typeof Buffer !== "undefined") {
-    return Buffer.from(str, "utf8").toString("base64url");
+  if (typeof window === "undefined" && typeof Buffer !== "undefined") {
+    return Buffer.from(str, "utf8")
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
   }
   const utf8Bytes = new TextEncoder().encode(str);
   let binary = "";
@@ -44,8 +48,8 @@ export function decodeBase64Url(base64url: string): string {
   const base64 = base64url
     .replace(/-/g, "+")
     .replace(/_/g, "/")
-    .padEnd(base64url.length + (4 - (base64url.length % 4)) % 4, "=");
-  if (typeof Buffer !== "undefined") {
+    .padEnd(base64url.length + ((4 - (base64url.length % 4)) % 4), "=");
+  if (typeof window === "undefined" && typeof Buffer !== "undefined") {
     return Buffer.from(base64, "base64").toString("utf8");
   }
   const binary = atob(base64);
@@ -66,11 +70,20 @@ export function generateShareUrl(setup: StudentSetup, origin?: string): string {
     origin ||
     (typeof window !== "undefined" && window.location.origin ? window.location.origin : "https://routinekit.vercel.app");
 
+  const hasBatch = Boolean(setup.batch && setup.batch !== "none");
+  const hasSection = Boolean(setup.section && setup.section !== "none");
+  const hasCourses = Boolean(setup.courses && setup.courses.length > 0);
+
+  // If nothing is configured yet, return the base URL directly
+  if (!hasBatch && !hasCourses) {
+    return base;
+  }
+
   // Check if setup is a pure batch-section with standard courses only (no retakes, no custom overrides)
   const isStandardBatch =
     setup.mode === "batch-section" &&
-    Boolean(setup.batch && setup.batch !== "none") &&
-    Boolean(setup.section && setup.section !== "none") &&
+    hasBatch &&
+    hasSection &&
     (!setup.courses || setup.courses.every((c) => !c.isRetake && c.batch === setup.batch)) &&
     (!setup.customOverrides || Object.keys(setup.customOverrides).length === 0) &&
     (!setup.customCourseSchedules || Object.keys(setup.customCourseSchedules).length === 0);
