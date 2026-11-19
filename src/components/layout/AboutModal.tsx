@@ -129,8 +129,8 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
               <li className="flex items-start gap-2">
                 <CheckIcon className="w-3.5 h-3.5 text-[var(--ink-primary)] shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-[var(--ink-primary)] font-medium">Multi-Format Exports:</strong>{" "}
-                  Export to crisp A4 printable PDF documents, 300 DPI PNG images for phone lock screens, and <code>.ics</code> files for Google Calendar and Apple Calendar.
+                  <strong className="text-[var(--ink-primary)] font-medium">Calendar Sync &amp; Share:</strong>{" "}
+                  Export directly to <code>.ics</code> files for Google Calendar and Apple Calendar, or share your schedule instantly via 1-click links and QR codes.
                 </span>
               </li>
               <li className="flex items-start gap-2">

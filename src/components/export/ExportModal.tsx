@@ -6,10 +6,6 @@ import { ScheduleItem, PublishedRoutine, StudentSetup } from "@/types/routine";
 import { getScheduleTitle } from "@/lib/routine/schedule";
 import { exportScheduleIcsFile } from "@/lib/calendar/icsGenerator";
 import {
-  exportTimetableAsPdf,
-  exportTimetableAsPng,
-} from "@/lib/export/timetableExporter";
-import {
   CalendarIcon,
   DownloadIcon,
   FileTextIcon,
@@ -49,32 +45,6 @@ export default function ExportModal({
     } catch (err) {
       console.error("ICS export error:", err);
       toast.error("Failed to generate calendar file. Please try again.");
-    } finally {
-      setDownloading(null);
-    }
-  };
-
-  const handlePdfExport = async () => {
-    try {
-      setDownloading("pdf");
-      await exportTimetableAsPdf(setup, routine, items);
-      toast.success("Downloaded official PDF timetable!");
-    } catch (err) {
-      console.error("PDF export error:", err);
-      toast.error("Failed to generate PDF. Please try again.");
-    } finally {
-      setDownloading(null);
-    }
-  };
-
-  const handleImageExport = async () => {
-    try {
-      setDownloading("png");
-      await exportTimetableAsPng(setup, routine, items);
-      toast.success("Downloaded timetable image card!");
-    } catch (err) {
-      console.error("Image export error:", err);
-      toast.error("Failed to generate image. Please try again.");
     } finally {
       setDownloading(null);
     }
@@ -171,67 +141,69 @@ export default function ExportModal({
             </button>
           </div>
 
-          {/* 3. Official Vector PDF */}
+          {/* 3. Official Vector PDF (Paused / Redesigning) */}
           <div className="p-3.5 rounded-xl border border-[var(--surface-border)] bg-[var(--surface-ground)] space-y-2.5">
             <div className="flex items-start gap-3">
-              <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
+              <div className="w-7 h-7 rounded-lg bg-zinc-800 text-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
                 <FileTextIcon className="w-3.5 h-3.5" />
               </div>
               <div className="flex-1 min-w-0 space-y-0.5">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <h3 className="text-xs font-bold text-[var(--ink-primary)]">
                     Official DIU Routine PDF
                   </h3>
                   <span className="px-1.5 py-0.5 rounded font-mono text-[10px] font-semibold bg-[var(--surface-elevated)] border border-[var(--surface-border)] text-[var(--ink-secondary)]">
                     .pdf
                   </span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700">
+                    Coming Soon
+                  </span>
                 </div>
                 <p className="text-[11px] text-[var(--ink-muted)] leading-relaxed">
-                  Designed university timetable grid, A4 landscape ready for printing.
+                  Printable vector timetable layout. Temporarily paused while we redesign the grid structure.
                 </p>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={handlePdfExport}
-              disabled={downloading === "pdf"}
-              className="w-full py-2 px-3 bg-[var(--surface-elevated)] hover:bg-[var(--surface-card)] text-[var(--ink-primary)] border border-[var(--surface-border)] hover:border-[var(--brand-border)] text-xs font-semibold rounded-lg active:scale-95 shadow-2xs transition-all cursor-pointer flex items-center justify-center gap-2"
+              disabled
+              className="w-full py-2 px-3 bg-[var(--surface-elevated)]/60 text-[var(--ink-muted)] border border-[var(--surface-border)] text-xs font-medium rounded-lg cursor-not-allowed flex items-center justify-center gap-2 select-none"
             >
-              <DownloadIcon className="w-3.5 h-3.5" />
-              <span>{downloading === "pdf" ? "Rendering PDF..." : "Download PDF Timetable"}</span>
+              <span>Coming Soon · Redesigning Layout</span>
             </button>
           </div>
 
-          {/* 4. High-Res Image Card */}
+          {/* 4. High-Res Image Card (Paused / Redesigning) */}
           <div className="p-3.5 rounded-xl border border-[var(--surface-border)] bg-[var(--surface-ground)] space-y-2.5">
             <div className="flex items-start gap-3">
-              <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
+              <div className="w-7 h-7 rounded-lg bg-zinc-800 text-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
                 <ImageIcon className="w-3.5 h-3.5" />
               </div>
               <div className="flex-1 min-w-0 space-y-0.5">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <h3 className="text-xs font-bold text-[var(--ink-primary)]">
                     Shareable Routine Image
                   </h3>
                   <span className="px-1.5 py-0.5 rounded font-mono text-[10px] font-semibold bg-[var(--surface-elevated)] border border-[var(--surface-border)] text-[var(--ink-secondary)]">
                     .png
                   </span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700">
+                    Coming Soon
+                  </span>
                 </div>
                 <p className="text-[11px] text-[var(--ink-muted)] leading-relaxed">
-                  Crisp 2x retina timetable image card for mobile lock screens and messaging.
+                  High-res image card for mobile lock screens. Temporarily paused while we polish the card layout.
                 </p>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={handleImageExport}
-              disabled={downloading === "png"}
-              className="w-full py-2 px-3 bg-[var(--surface-elevated)] hover:bg-[var(--surface-card)] text-[var(--ink-primary)] border border-[var(--surface-border)] hover:border-[var(--brand-border)] text-xs font-semibold rounded-lg active:scale-95 shadow-2xs transition-all cursor-pointer flex items-center justify-center gap-2"
+              disabled
+              className="w-full py-2 px-3 bg-[var(--surface-elevated)]/60 text-[var(--ink-muted)] border border-[var(--surface-border)] text-xs font-medium rounded-lg cursor-not-allowed flex items-center justify-center gap-2 select-none"
             >
-              <DownloadIcon className="w-3.5 h-3.5" />
-              <span>{downloading === "png" ? "Rendering Image..." : "Download Image (.png)"}</span>
+              <span>Coming Soon · Redesigning Layout</span>
             </button>
           </div>
         </div>
