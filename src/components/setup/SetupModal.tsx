@@ -16,6 +16,7 @@ import {
   getCoursesForBatchAndSection,
   formatCourseCode,
   formatRetakeSection,
+  getRoutineCourseCodeMap,
 } from "@/lib/routine/schedule";
 import { ACADEMIC_DAYS } from "@/lib/routine/calendarLayout";
 import {
@@ -26,6 +27,58 @@ import {
   ChevronDownIcon,
   BookOpenIcon,
 } from "@/components/ui/Icons";
+
+// Module-level caches for routine batches and course directory (Rule js-cache-function-results)
+const routineBatchesCache = new WeakMap<PublishedRoutine, string[]>();
+const routineAllCoursesCache = new WeakMap<PublishedRoutine, { code: string; hasRetake: boolean }[]>();
+
+function getAvailableBatches(routine: PublishedRoutine): string[] {
+  let cached = routineBatchesCache.get(routine);
+  if (!cached) {
+    const set = new Set<string>();
+    routine.classes.forEach((c) => {
+      if (c.batch) {
+        const b = c.batch.trim();
+        const upper = b.toUpperCase();
+        if (
+          upper !== "GENERAL" &&
+          upper !== "RE" &&
+          !upper.startsWith("RE_") &&
+          !upper.startsWith("RETAKE")
+        ) {
+          set.add(b);
+        }
+      }
+    });
+    cached = Array.from(set).sort((a, b) => {
+      const numA = parseInt(a, 10);
+      const numB = parseInt(b, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numB - numA;
+      return a.localeCompare(b);
+    });
+    routineBatchesCache.set(routine, cached);
+  }
+  return cached;
+}
+
+function getAllCourses(routine: PublishedRoutine): { code: string; hasRetake: boolean }[] {
+  let cached = routineAllCoursesCache.get(routine);
+  if (!cached) {
+    const map = new Map<string, { code: string; hasRetake: boolean }>();
+    routine.classes.forEach((c) => {
+      const code = formatCourseCode(c.courseCode);
+      const isDeptRetake = isDepartmentalRetake(c);
+      if (!map.has(code)) {
+        map.set(code, { code, hasRetake: isDeptRetake });
+      } else if (isDeptRetake) {
+        map.get(code)!.hasRetake = true;
+      }
+    });
+    cached = Array.from(map.values()).sort((a, b) => a.code.localeCompare(b.code));
+    routineAllCoursesCache.set(routine, cached);
+  }
+  return cached;
+}
 
 function sortClassesByDayAndTime<T extends { day: DayOfWeek; startTime: string }>(classes: T[]): T[] {
   return [...classes].sort((a, b) => {
@@ -125,30 +178,8 @@ export default function SetupModal({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Distinct student batches
-  const availableBatches = useMemo(() => {
-    const set = new Set<string>();
-    routine.classes.forEach((c) => {
-      if (c.batch) {
-        const b = c.batch.trim();
-        const upper = b.toUpperCase();
-        if (
-          upper !== "GENERAL" &&
-          upper !== "RE" &&
-          !upper.startsWith("RE_") &&
-          !upper.startsWith("RETAKE")
-        ) {
-          set.add(b);
-        }
-      }
-    });
-    return Array.from(set).sort((a, b) => {
-      const numA = parseInt(a, 10);
-      const numB = parseInt(b, 10);
-      if (!isNaN(numA) && !isNaN(numB)) return numB - numA;
-      return a.localeCompare(b);
-    });
-  }, [routine]);
+  // Distinct student batches (cached per routine instance)
+  const availableBatches = useMemo(() => getAvailableBatches(routine), [routine]);
 
   // Distinct base sections for the selected batch (always whole sections: A, B, C, etc.)
   const availableSectionsForBatch = useMemo(() => {
@@ -168,26 +199,8 @@ export default function SetupModal({
     return Array.from(set).sort();
   }, [routine, batch]);
 
-  // Distinct courses in the routine with courseCode
-  const allCourses = useMemo(() => {
-    const map = new Map<
-      string,
-      { code: string; hasRetake: boolean }
-    >();
-    routine.classes.forEach((c) => {
-      const code = formatCourseCode(c.courseCode);
-      const isDeptRetake = isDepartmentalRetake(c);
-      if (!map.has(code)) {
-        map.set(code, {
-          code,
-          hasRetake: isDeptRetake,
-        });
-      } else if (isDeptRetake) {
-        map.get(code)!.hasRetake = true;
-      }
-    });
-    return Array.from(map.values()).sort((a, b) => a.code.localeCompare(b.code));
-  }, [routine]);
+  // Distinct courses in the routine with courseCode (cached per routine instance)
+  const allCourses = useMemo(() => getAllCourses(routine), [routine]);
 
   // Filtered courses based on search query and retake-only toggle
   const filteredCourses = useMemo(() => {
@@ -202,17 +215,15 @@ export default function SetupModal({
     return list;
   }, [allCourses, retakeOnlyFilter, searchQuery]);
 
-  // Distinct offerings for currently selected course
+  // Distinct offerings for currently selected course via O(1) map lookup
   const availableOfferingsForCourse = useMemo((): OfferingInfo[] => {
     if (!selectedCourseCode) return [];
 
     const cleanTargetCode = formatCourseCode(selectedCourseCode);
-    const matching = routine.classes.filter(
-      (c) => formatCourseCode(c.courseCode) === cleanTargetCode
-    );
+    const candidateClasses = getRoutineCourseCodeMap(routine).get(cleanTargetCode) || [];
 
     const map = new Map<string, RoutineClass[]>();
-    matching.forEach((c) => {
+    candidateClasses.forEach((c) => {
       const secLabel = c.section.trim().toUpperCase();
       const key = `${c.batch}:::${secLabel}`;
       if (!map.has(key)) map.set(key, []);

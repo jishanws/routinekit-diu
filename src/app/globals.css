@@ -292,28 +292,30 @@ html.theme-transitioning *::after {
   font-variant-numeric: tabular-nums lining-nums;
 }
 
-/* Universal scrollbars across Firefox, Chrome, Safari, and Linux GTK */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--surface-muted) transparent;
-}
+/* Universal scrollbars: keep desktop sleek, leave mobile touch native for 120fps inertia scrolling */
+@media (pointer: fine) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface-muted) transparent;
+  }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: var(--surface-muted);
-  border-radius: 9999px;
-}
+  ::-webkit-scrollbar-thumb {
+    background: var(--surface-muted);
+    border-radius: 9999px;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--ink-faint);
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-faint);
+  }
 }
 
 /* Stable scrollbar gutters to prevent asymmetrical layout shifting */

@@ -51,7 +51,7 @@ export default function AppShell({
   return (
     <div className="min-h-screen bg-[var(--surface-page)] text-[var(--ink-primary)] transition-colors flex flex-col font-sans relative">
       {/* 58px Floating Command Masthead */}
-      <header className="sticky top-0 z-40 h-[58px] border-b border-[var(--surface-border)] bg-[var(--surface-card)]/90 backdrop-blur-md shadow-2xs flex items-center pt-safe">
+      <header className="sticky top-0 z-40 h-[58px] border-b border-[var(--surface-border)] bg-[var(--surface-card)]/90 backdrop-blur-md shadow-2xs flex items-center pt-safe transform-gpu">
         <div className="max-w-4xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* 1. Left Brand */}

@@ -33,13 +33,29 @@ export function getCachedRoutine(): PublishedRoutine | null {
  */
 export function setCachedRoutine(data: PublishedRoutine): void {
   if (!data || !Array.isArray(data.classes)) return;
+
+  // If in-memory routine is already identical version, skip redundant JSON serialization and disk write
+  const isSameVersion = inMemoryRoutine && inMemoryRoutine.routine_version === data.routine_version;
   inMemoryRoutine = data;
 
+  if (isSameVersion) {
+    return;
+  }
+
   if (typeof window !== "undefined") {
-    try {
-      localStorage.setItem(CACHED_ROUTINE_KEY, JSON.stringify(data));
-    } catch (err) {
-      console.warn("Failed to save routine to localStorage (quota exceeded?):", err);
+    const persistToStorage = () => {
+      try {
+        localStorage.setItem(CACHED_ROUTINE_KEY, JSON.stringify(data));
+      } catch (err) {
+        console.warn("Failed to save routine to localStorage (quota exceeded?):", err);
+      }
+    };
+
+    // Defer 600KB localStorage write off critical path to browser idle time
+    if ("requestIdleCallback" in window) {
+      (window as unknown as { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(persistToStorage);
+    } else {
+      setTimeout(persistToStorage, 100);
     }
 
     // Also persist in Cache API for Service Worker offline retrieval

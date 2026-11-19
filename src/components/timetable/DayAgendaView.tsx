@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ScheduleItem, DayOfWeek } from "@/types/routine";
 import {
@@ -23,7 +23,6 @@ import {
   formatAcademicWeekRange,
 } from "@/lib/routine/calendarLayout";
 import { formatBatchSectionBadge } from "@/lib/routine/schedule";
-import { TRANSITIONS } from "@/lib/ui/transitions";
 
 const DAYS_ORDER: DayOfWeek[] = [
   "Saturday",
@@ -166,29 +165,33 @@ export default function DayAgendaView({
 
   const currentDayName = DAYS_ORDER.includes(realCurrentDayName) ? realCurrentDayName : "Saturday";
 
-  const [activeDay, setActiveDay] = useState<DayOfWeek>(initialDay || currentDayName);
-  const [prevInitialDay, setPrevInitialDay] = useState(initialDay);
+  const [internalDay, setInternalDay] = useState<DayOfWeek>(() => initialDay || currentDayName);
+  const activeDay = initialDay !== undefined ? initialDay : internalDay;
 
-  if (initialDay && initialDay !== prevInitialDay) {
-    setPrevInitialDay(initialDay);
-    setActiveDay(initialDay);
-  }
+  const handleDayChange = (day: DayOfWeek) => {
+    if (initialDay === undefined) {
+      setInternalDay(day);
+    }
+    if (onSelectDay) {
+      onSelectDay(day);
+    }
+  };
 
-  // Mobile horizontal swipe gestures between academic days
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  // Mobile horizontal swipe gestures between academic days (Rule rerender-use-ref-transient-values)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartX(e.touches[0].clientX);
-    setTouchStartY(e.touches[0].clientY);
+    touchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX === null || touchStartY === null) return;
-    const deltaX = e.changedTouches[0].clientX - touchStartX;
-    const deltaY = e.changedTouches[0].clientY - touchStartY;
-    setTouchStartX(null);
-    setTouchStartY(null);
+    if (!touchStartRef.current) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
 
     // Only switch days if horizontal swipe delta is significant and horizontal > vertical
     if (Math.abs(deltaX) > 48 && Math.abs(deltaX) > Math.abs(deltaY) * 1.4) {
@@ -196,16 +199,25 @@ export default function DayAgendaView({
       if (deltaX < 0 && currentIndex < DAYS_ORDER.length - 1) {
         // Swiped left -> next day
         const nextDay = DAYS_ORDER[currentIndex + 1];
-        setActiveDay(nextDay);
-        if (onSelectDay) onSelectDay(nextDay);
+        handleDayChange(nextDay);
       } else if (deltaX > 0 && currentIndex > 0) {
         // Swiped right -> previous day
         const prevDay = DAYS_ORDER[currentIndex - 1];
-        setActiveDay(prevDay);
-        if (onSelectDay) onSelectDay(prevDay);
+        handleDayChange(prevDay);
       }
     }
   };
+
+  // Precompute class counts per day for O(1) tab badge lookups
+  const classCountByDay = useMemo(() => {
+    const map = new Map<DayOfWeek, number>();
+    for (const d of DAYS_ORDER) map.set(d, 0);
+    for (const item of items) {
+      const prev = map.get(item.day) || 0;
+      map.set(item.day, prev + 1);
+    }
+    return map;
+  }, [items]);
 
   // Academic week days (Saturday - Thursday) with real dates
   const weekDays = useMemo(() => {
@@ -230,18 +242,20 @@ export default function DayAgendaView({
     };
   }, [selectedDate]);
 
-  // Current time in Asia/Dhaka with 30s interval
-  const [currentTime, setCurrentTime] = useState<Date>(() => getDhakaNow());
+  // Current time in Asia/Dhaka with 30s interval: only triggers re-render when minute actually changes
+  const [nowMinutes, setNowMinutes] = useState<number>(() => {
+    const now = getDhakaNow();
+    return now.getHours() * 60 + now.getMinutes();
+  });
+
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(getDhakaNow());
+      const now = getDhakaNow();
+      const currentMin = now.getHours() * 60 + now.getMinutes();
+      setNowMinutes((prev) => (prev !== currentMin ? currentMin : prev));
     }, 30000);
     return () => clearInterval(timer);
   }, []);
-
-  const nowMinutes = useMemo(() => {
-    return currentTime.getHours() * 60 + currentTime.getMinutes();
-  }, [currentTime]);
 
   const isToday = useMemo(() => {
     const activeMeta = weekDays.find((d) => d.dayOfWeek === activeDay);
@@ -441,7 +455,7 @@ export default function DayAgendaView({
 
   return (
     <div
-      className="space-y-4 sm:space-y-6 select-none"
+      className="space-y-4 sm:space-y-6"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -468,7 +482,7 @@ export default function DayAgendaView({
         >
           {weekDays.map((dayMeta) => {
             const day = dayMeta.dayOfWeek;
-            const count = items.filter((i) => i.day === day).length;
+            const count = classCountByDay.get(day) || 0;
             const isSelected = activeDay === day;
             const isTodayDay = dayMeta.isToday;
             const isOff = count === 0;
@@ -479,29 +493,17 @@ export default function DayAgendaView({
                 role="tab"
                 aria-selected={isSelected}
                 type="button"
-                onClick={() => {
-                  setActiveDay(day);
-                  if (onSelectDay) onSelectDay(day);
-                }}
+                onClick={() => handleDayChange(day)}
                 title={`${dayMeta.dayOfWeek}, ${dayMeta.monthShort} ${dayMeta.dateNumber} (${count > 0 ? `${count} classes` : "Off"})`}
                 aria-label={`${dayMeta.monthShort} ${dayMeta.dateNumber}, ${dayMeta.dayOfWeek} (${count > 0 ? `${count} classes` : "Off"})`}
-                className={`relative py-1.5 sm:py-2 px-1 sm:px-2 rounded-xl text-center cursor-pointer transition-all outline-hidden select-none group flex-1 flex flex-col justify-center items-center ${
+                className={`relative py-1.5 sm:py-2 px-1 sm:px-2 rounded-xl text-center cursor-pointer transition-all duration-150 outline-hidden select-none group flex-1 flex flex-col justify-center items-center active:scale-95 ${
                   isSelected
-                    ? "text-white"
+                    ? "bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-md ring-1 ring-black/5 dark:ring-white/15"
                     : isOff
                     ? "text-[var(--ink-secondary)] hover:text-[var(--ink-primary)] hover:bg-[var(--surface-elevated)]/60 opacity-60 hover:opacity-100"
                     : "text-[var(--ink-secondary)] hover:text-[var(--ink-primary)] hover:bg-[var(--surface-elevated)]/70"
                 }`}
               >
-                {/* Fluid Motion layoutId Background Pill */}
-                {isSelected && (
-                  <motion.div
-                    layoutId="activeDayPill"
-                    className="absolute inset-0 rounded-xl bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-md z-0 ring-1 ring-black/5 dark:ring-white/15"
-                    transition={TRANSITIONS.spring}
-                  />
-                )}
-
                 {/* Inner Content Stack */}
                 <div className="relative z-10 flex flex-col items-center justify-center py-0.5 sm:py-1 w-full">
                   {/* 1. Day Name (Top) */}
@@ -576,14 +578,14 @@ export default function DayAgendaView({
         </div>
       )}
 
-      {/* Staggered Cascade Agenda Container */}
-      <AnimatePresence mode="wait">
+      {/* Instant, smooth GPU-accelerated agenda view container */}
+      <AnimatePresence initial={false}>
         <motion.div
           key={activeDay}
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0.88, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={TRANSITIONS.crossFade}
+          exit={{ opacity: 0, position: "absolute", pointerEvents: "none" }}
+          transition={{ duration: 0.12, ease: "easeOut" }}
           className="space-y-3 sm:space-y-4"
         >
           {dayItems.length === 0 ? (

@@ -395,89 +395,29 @@ export default function Home() {
     handleSaveSetup(updated);
   };
 
-  const cohortLabel = useMemo(() => {
-    const hasBatch = activeSetup.batch && activeSetup.batch !== "none";
-    const hasSection = activeSetup.section && activeSetup.section !== "none";
-
-    // 1. Custom courses
-    const customCourses = new Set(
-      derivedSchedule.items.filter((item) => item.isCustom).map((item) => item.courseCode)
-    );
-    const customCnt = customCourses.size;
-
-    // 2. Retake courses
-    const retakeCourses = new Set(
-      derivedSchedule.items
-        .filter((item) => item.isRetake && !item.isCustom)
-        .map((item) => item.courseCode)
-    );
-    const retakeCnt = retakeCourses.size;
-
-    // 3. Other batch/section courses
-    const othersCourses = new Set(
-      derivedSchedule.items
-        .filter(
-          (item) =>
-            !item.isRetake &&
-            !item.isCustom &&
-            !isBaseCohortClass(item, activeSetup.batch, activeSetup.section)
-        )
-        .map((item) => item.courseCode)
-    );
-    const othersCnt = othersCourses.size;
-
-    let base = "Not Configured";
-    if (hasBatch && hasSection) {
-      base = `Batch ${activeSetup.batch}_${activeSetup.section}`;
-    } else if (hasBatch) {
-      base = `Batch ${activeSetup.batch}`;
-    } else if (activeSetup.courses.length > 0) {
-      base = `${activeSetup.courses.length} course${activeSetup.courses.length > 1 ? "s" : ""}`;
-    }
-
-    const tags: string[] = [];
-    if (othersCnt > 0) {
-      tags.push(`+${othersCnt} other${othersCnt > 1 ? "s" : ""}`);
-    }
-    if (retakeCnt > 0) {
-      tags.push(`+${retakeCnt} retake`);
-    }
-    if (customCnt > 0) {
-      tags.push(`+${customCnt} custom`);
-    }
-
-    return tags.length > 0 ? `${base} (${tags.join(", ")})` : base;
-  }, [derivedSchedule.items, activeSetup.batch, activeSetup.section, activeSetup.courses.length]);
-
   const cohortBreakdown = useMemo((): CohortBreakdown => {
     const hasBatch = activeSetup.batch && activeSetup.batch !== "none";
     const hasSection = activeSetup.section && activeSetup.section !== "none";
 
-    // 1. Custom courses
-    const customCourses = new Set(
-      derivedSchedule.items.filter((item) => item.isCustom).map((item) => item.courseCode)
-    );
+    // Single-pass extraction of all course sets and categories (Rule js-combine-iterations)
+    const customCourses = new Set<string>();
+    const retakeCourses = new Set<string>();
+    const othersCourses = new Set<string>();
+    const totalCourseCodes = new Set<string>();
+
+    for (const item of derivedSchedule.items) {
+      totalCourseCodes.add(item.courseCode);
+      if (item.isCustom) {
+        customCourses.add(item.courseCode);
+      } else if (item.isRetake) {
+        retakeCourses.add(item.courseCode);
+      } else if (!isBaseCohortClass(item, activeSetup.batch, activeSetup.section)) {
+        othersCourses.add(item.courseCode);
+      }
+    }
+
     const customCnt = customCourses.size;
-
-    // 2. Retake courses
-    const retakeCourses = new Set(
-      derivedSchedule.items
-        .filter((item) => item.isRetake && !item.isCustom)
-        .map((item) => item.courseCode)
-    );
     const retakeCnt = retakeCourses.size;
-
-    // 3. Other batch/section courses
-    const othersCourses = new Set(
-      derivedSchedule.items
-        .filter(
-          (item) =>
-            !item.isRetake &&
-            !item.isCustom &&
-            !isBaseCohortClass(item, activeSetup.batch, activeSetup.section)
-        )
-        .map((item) => item.courseCode)
-    );
     const othersCnt = othersCourses.size;
 
     let base = "Not Configured";
@@ -488,8 +428,6 @@ export default function Home() {
     } else if (activeSetup.courses.length > 0) {
       base = `${activeSetup.courses.length} Course${activeSetup.courses.length > 1 ? "s" : ""}`;
     }
-
-    const totalCoursesCnt = new Set(derivedSchedule.items.map((i) => i.courseCode)).size;
 
     return {
       baseLabel: base,
@@ -502,7 +440,7 @@ export default function Home() {
       conflictCount: derivedSchedule.conflicts.length,
       semesterLabel: routine?.semester_label,
       routineVersion: routine?.routine_version,
-      totalCoursesCount: totalCoursesCnt || activeSetup.courses.length || 0,
+      totalCoursesCount: totalCourseCodes.size || activeSetup.courses.length || 0,
       classesPerWeek: derivedSchedule.items.length,
       retakeCourses: Array.from(retakeCourses),
       customCourses: Array.from(customCourses),
@@ -518,6 +456,33 @@ export default function Home() {
     routine?.semester_label,
     routine?.routine_version,
   ]);
+
+  const cohortLabel = useMemo(() => {
+    const hasBatch = activeSetup.batch && activeSetup.batch !== "none";
+    const hasSection = activeSetup.section && activeSetup.section !== "none";
+
+    let base = "Not Configured";
+    if (hasBatch && hasSection) {
+      base = `Batch ${activeSetup.batch}_${activeSetup.section}`;
+    } else if (hasBatch) {
+      base = `Batch ${activeSetup.batch}`;
+    } else if (activeSetup.courses.length > 0) {
+      base = `${activeSetup.courses.length} course${activeSetup.courses.length > 1 ? "s" : ""}`;
+    }
+
+    const tags: string[] = [];
+    if (cohortBreakdown.othersCount > 0) {
+      tags.push(`+${cohortBreakdown.othersCount} other${cohortBreakdown.othersCount > 1 ? "s" : ""}`);
+    }
+    if (cohortBreakdown.retakeCount > 0) {
+      tags.push(`+${cohortBreakdown.retakeCount} retake`);
+    }
+    if (cohortBreakdown.customCount > 0) {
+      tags.push(`+${cohortBreakdown.customCount} custom`);
+    }
+
+    return tags.length > 0 ? `${base} (${tags.join(", ")})` : base;
+  }, [cohortBreakdown, activeSetup.batch, activeSetup.section, activeSetup.courses.length]);
 
   return (
     <AppShell

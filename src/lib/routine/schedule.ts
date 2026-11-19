@@ -261,6 +261,27 @@ export function getCoursesForBatchAndSection(
   return Array.from(map.values()).sort((a, b) => a.courseCode.localeCompare(b.courseCode));
 }
 
+// Module-level WeakMap cache for course code indexing across routine classes (Rule js-index-maps)
+const routineIndexCache = new WeakMap<PublishedRoutine, Map<string, RoutineClass[]>>();
+
+export function getRoutineCourseCodeMap(routine: PublishedRoutine): Map<string, RoutineClass[]> {
+  let cached = routineIndexCache.get(routine);
+  if (!cached) {
+    cached = new Map<string, RoutineClass[]>();
+    for (const c of routine.classes) {
+      const code = c.courseCode.replace(/\s+/g, "").toUpperCase();
+      let list = cached.get(code);
+      if (!list) {
+        list = [];
+        cached.set(code, list);
+      }
+      list.push(c);
+    }
+    routineIndexCache.set(routine, cached);
+  }
+  return cached;
+}
+
 /**
  * Derives a student's personal schedule from the published routine and student setup.
  */
@@ -357,16 +378,7 @@ export function derivePersonalSchedule(
   }
 
   // Index classes by normalized course code for O(1) candidate lookup (Rule js-index-maps)
-  const courseCodeMap = new Map<string, RoutineClass[]>();
-  for (const c of routine.classes) {
-    const code = normCode(c.courseCode);
-    let list = courseCodeMap.get(code);
-    if (!list) {
-      list = [];
-      courseCodeMap.set(code, list);
-    }
-    list.push(c);
-  }
+  const courseCodeMap = getRoutineCourseCodeMap(routine);
 
   // 2. Add explicitly selected/added courses
   for (const sel of setup.courses) {

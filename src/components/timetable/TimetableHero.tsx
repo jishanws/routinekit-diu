@@ -149,13 +149,14 @@ export default function TimetableHero({
 
   const conflictSummary = useMemo(() => {
     if (!items || cohort.conflictCount === 0) return null;
+    const itemMap = new Map(items.map((x) => [x.id, x]));
     const pairs: string[] = [];
     const seen = new Set<string>();
 
     for (const it of items) {
       if (it.conflictsWith && it.conflictsWith.length > 0) {
         for (const otherId of it.conflictsWith) {
-          const other = items.find((x) => x.id === otherId);
+          const other = itemMap.get(otherId);
           if (other) {
             const sortedCodes = [it.courseCode, other.courseCode].sort().join(" & ");
             const dayShort = it.day.slice(0, 3);
